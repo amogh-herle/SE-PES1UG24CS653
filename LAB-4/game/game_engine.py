@@ -1,7 +1,10 @@
+import os
 import pygame
 from .player import Player
 from .platform import Platform
 from .hazard import Hazard
+
+SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "sounds")
 
 # Game Engine
 
@@ -26,6 +29,8 @@ class GameEngine:
 
         self.start_x, self.start_y = 40, height - 120
         self.player = Player(self.start_x, self.start_y)
+
+        self._load_sounds()
 
         # A simple hand-built level: platforms with gaps between them
         # (falling into a gap means falling off the bottom of the
@@ -55,7 +60,22 @@ class GameEngine:
                 self.reset(name, gravity, jump_strength)
             return
         if event.key in (pygame.K_SPACE, pygame.K_UP, pygame.K_w):
+            if self.player.on_ground:
+                self.sounds["jump"].play()
             self.player.jump()
+
+    def _load_sounds(self):
+        self.sounds = {}
+        try:
+            pygame.mixer.init()
+            for name in ("jump", "goal", "death"):
+                self.sounds[name] = pygame.mixer.Sound(os.path.join(SOUNDS_DIR, f"{name}.wav"))
+        except pygame.error:
+            # No audio device available (e.g. headless test run) - play() becomes a no-op.
+            class _SilentSound:
+                def play(self):
+                    pass
+            self.sounds = {name: _SilentSound() for name in ("jump", "goal", "death")}
 
     def reset(self, difficulty_name=None, gravity=None, jump_strength=None):
         self.player = Player(self.start_x, self.start_y)
@@ -100,14 +120,17 @@ class GameEngine:
 
         for hazard in self.hazards:
             if self.player.rect().colliderect(hazard.rect()):
+                self.sounds["death"].play()
                 self.game_over = True
                 return
 
         if self.player.y > self.height:
+            self.sounds["death"].play()
             self.game_over = True
             return
 
         if self.player.x >= self.goal_x:
+            self.sounds["goal"].play()
             self.score += 1
             self.player.x, self.player.y = self.start_x, self.start_y
             self.player.vy = 0
