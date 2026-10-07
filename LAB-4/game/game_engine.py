@@ -10,11 +10,19 @@ BROWN = (150, 100, 60)
 RED = (220, 60, 60)
 GREEN = (0, 200, 0)
 
+DIFFICULTIES = {
+    pygame.K_1: ("Easy", 0.45, -11),
+    pygame.K_2: ("Medium", 0.6, -12),
+    pygame.K_3: ("Hard", 0.85, -13),
+}
+
 class GameEngine:
     def __init__(self, width, height):
         self.width = width
         self.height = height
         self.gravity = 0.6
+        self.difficulty_name = "Medium"
+        self.quit = False
 
         self.start_x, self.start_y = 40, height - 120
         self.player = Player(self.start_x, self.start_y)
@@ -29,7 +37,7 @@ class GameEngine:
             Platform(420, ground_y - 60, 120),
             Platform(600, ground_y, 180),
         ]
-        self.hazards = [Hazard(240, ground_y - 14, 100)]
+        self.hazards = [Hazard(260, ground_y - 14, 40)]
         self.goal_x = 740
 
         self.score = 0
@@ -40,14 +48,21 @@ class GameEngine:
         if event.type != pygame.KEYDOWN:
             return
         if self.game_over:
-            if event.key in (pygame.K_SPACE, pygame.K_RETURN):
-                self.reset()
+            if event.key == pygame.K_ESCAPE:
+                self.quit = True
+            elif event.key in DIFFICULTIES:
+                name, gravity, jump_strength = DIFFICULTIES[event.key]
+                self.reset(name, gravity, jump_strength)
             return
         if event.key in (pygame.K_SPACE, pygame.K_UP, pygame.K_w):
             self.player.jump()
 
-    def reset(self):
+    def reset(self, difficulty_name=None, gravity=None, jump_strength=None):
         self.player = Player(self.start_x, self.start_y)
+        if difficulty_name is not None:
+            self.difficulty_name = difficulty_name
+            self.gravity = gravity
+            self.player.jump_strength = jump_strength
         self.score = 0
         self.game_over = False
 
@@ -127,5 +142,5 @@ class GameEngine:
         score_line = self.font.render(f"Final Score: {self.score}", True, WHITE)
         screen.blit(score_line, (self.width // 2 - score_line.get_width() // 2, self.height // 2 - 20))
 
-        prompt = self.font.render("Press SPACE or ENTER to continue", True, WHITE)
+        prompt = self.font.render("1: Easy   2: Medium   3: Hard   ESC: Exit", True, WHITE)
         screen.blit(prompt, (self.width // 2 - prompt.get_width() // 2, self.height // 2 + 30))
