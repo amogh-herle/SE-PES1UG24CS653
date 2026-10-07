@@ -91,6 +91,34 @@ simple-platformer-main/
 
 ---
 
+## Changes Made
+
+### Task 1: Collision Detection (`game/game_engine.py`)
+- Bug: collision was checked only *after* the player moved for the frame, using a plain rect overlap, so a fast fall could carry the player from above a platform to below it in one frame without the rects ever touching (tunneling).
+- Fix: swept collision check — compare the player's bottom edge before and after moving (`prev_bottom`, `new_bottom`) against each platform's top, and land whenever the feet crossed the platform's top during that frame's movement, combined with a horizontal overlap check.
+- Added a terminal velocity cap (`vy` capped at 20) so fall speed doesn't grow unbounded.
+
+### Task 2: Game Over Screen (`game/game_engine.py`)
+- Removed the `print()` debug statement.
+- Added `render_game_over()`: dark overlay, "Game Over" title, final score, and an on-screen prompt.
+- Added `reset()` and updated `handle_event()` to wait for SPACE/ENTER instead of ending silently.
+
+### Task 3: Replay with Difficulty (`game/game_engine.py`, `main.py`)
+- Added a `DIFFICULTIES` mapping (keys 1/2/3 → Easy/Medium/Hard, each with its own gravity and jump strength).
+- Game-over screen now shows difficulty options and an ESC-to-exit option.
+- `reset()` accepts the chosen difficulty and applies it; `main.py`'s loop checks `engine.quit` to exit cleanly.
+
+### Task 4: Sound Effects (`game/game_engine.py`, `game/sounds/`)
+- Generated three short WAV tones (`jump.wav`, `goal.wav`, `death.wav`) from Python's stdlib `wave` module — no external assets needed.
+- Added `_load_sounds()` with a silent fallback if no audio device is available.
+- Wired sounds: jump on an actual jump, goal chime on reaching the goal, death tone on hazard touch or falling off-screen.
+
+### Other tweaks
+- Reduced the hazard's width (100 → 40) and recentered it so it sits fully on its platform.
+- Added `chat_history.md` — exported summary of the LLM pair-programming session used for this lab.
+
+---
+
 ## Submission Checklist
 
 Submission is only the following three things:
