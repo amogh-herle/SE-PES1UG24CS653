@@ -1,3 +1,5 @@
+# SOFTWARE ENGINEERING LAB DOCUMENTS
+
 # Real-Time Simple Platformer Game
 
 This project is a terminal-based platformer using **Pygame**. It introduces students to interactive game design using object-oriented principles and real-time graphical rendering.
