@@ -53,25 +53,24 @@ class GameEngine:
             return
 
         self.player.vy += self.gravity
+        self.player.vy = min(self.player.vy, 20)  # terminal velocity cap
         self.player.x = max(0, self.player.x + self.player.vx)
 
-        # NOTE: gravity has no terminal-velocity cap, so vertical speed
-        # keeps growing the longer the player falls. Collision is only
-        # checked against the player's rect *after* it has already
-        # moved for the frame - there's no check for whether the
-        # player's path crossed a platform along the way. After a
-        # long enough fall (e.g. off the elevated middle platform),
-        # a single frame's movement can carry the player from just
-        # above a platform to just below it without the two rects
-        # ever overlapping, so the platform is skipped entirely and
-        # the player falls straight through. See Task 1 in the README.
+        prev_bottom = self.player.y + self.player.height
         self.player.y += self.player.vy
+        new_bottom = self.player.y + self.player.height
         self.player.on_ground = False
-        for platform in self.platforms:
-            if self.player.rect().colliderect(platform.rect()) and self.player.vy >= 0:
-                self.player.y = platform.y - self.player.height
-                self.player.vy = 0
-                self.player.on_ground = True
+        if self.player.vy >= 0:
+            for platform in self.platforms:
+                p = platform.rect()
+                # horizontal overlap, and feet crossed the platform's
+                # top this frame (swept check, not just post-move overlap)
+                horizontal_overlap = self.player.x + self.player.width > p.left and self.player.x < p.right
+                crossed_top = prev_bottom <= p.top and new_bottom >= p.top
+                if horizontal_overlap and crossed_top:
+                    self.player.y = p.top - self.player.height
+                    self.player.vy = 0
+                    self.player.on_ground = True
 
         for hazard in self.hazards:
             if self.player.rect().colliderect(hazard.rect()):

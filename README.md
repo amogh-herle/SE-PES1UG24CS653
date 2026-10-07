@@ -7,7 +7,7 @@ This project is a terminal-based platformer using **Pygame**. It introduces stud
 ## What’s Provided
 
 A partially working version of a platformer with:
-
+Space
 - A player-controlled character with left/right movement, gravity, and jumping
 - A small hand-built level of platforms with gaps and one hazard
 - Score display
