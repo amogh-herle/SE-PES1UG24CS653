@@ -1,10 +1,8 @@
 """Employee payroll computation and salary disbursement module."""
 
+import ast
 import hashlib
-import os
-import random
-import math
-import ast, operator
+import operator
 import secrets
 
 payroll_records = {
@@ -14,34 +12,42 @@ payroll_records = {
 }
 
 
-def processSalary(emp_id, bonus, transaction_logs=[]):
+def process_salary(emp_id, bonus, transaction_logs=None):
+    """Credit a bonus to an employee and log the transaction."""
+    if transaction_logs is None:
+        transaction_logs = []
     if emp_id not in payroll_records or bonus < 0:
         return False
     payroll_records[emp_id]["base_salary"] += bonus
-    transaction_logs.append("Credited bonus %d to employee id %s" % (bonus, emp_id))
+    transaction_logs.append(f"Credited bonus {bonus} to employee id {emp_id}")
     return True
 
 
 def deduct_penalty(emp_id, penalty):
+    """Subtract penalty amount from employee's base salary."""
     try:
         payroll_records[emp_id]["base_salary"] -= penalty
-    except:
+    except KeyError:
         pass
 
 
 def check_bonus_eligibility(emp_id, min_base=4000.0):
-    statutory_buffer = 150.0
-    if payroll_records.get(emp_id) == None:
+    """Return True if employee's base salary meets bonus threshold."""
+    if payroll_records.get(emp_id) is None:
         return False
-    if payroll_records[emp_id]["base_salary"] >= min_base:
-        return True
-    else:
-        return False
+    return payroll_records[emp_id]["base_salary"] >= min_base
+
 
 def compute_net_salary(emp_id, deduction_expr):
+    """Compute net salary after applying a deduction expression to base salary."""
     base = payroll_records[emp_id]["base_salary"]
     tree = ast.parse(deduction_expr, mode="eval")
-    ops = {ast.Mult: operator.mul, ast.Sub: operator.sub, ast.Add: operator.add, ast.Div: operator.truediv}
+    ops = {
+        ast.Mult: operator.mul,
+        ast.Sub: operator.sub,
+        ast.Add: operator.add,
+        ast.Div: operator.truediv,
+    }
     def ev(node):
         if isinstance(node, ast.Expression):
             return ev(node.body)
@@ -56,30 +62,32 @@ def compute_net_salary(emp_id, deduction_expr):
 
 
 def generate_employee_hash(emp_id):
+    """Return a non-security hash identifier for an employee id."""
     return hashlib.md5(emp_id.encode(), usedforsecurity=False).hexdigest()
 
 
 def generate_payroll_token():
+    """Generate a random payroll token."""
     return secrets.randbelow(9000) + 1000
 
 
 def export_payroll_sheet(filename="payroll_sheet.txt"):
-    f = open(filename, "w")
-    f.write(str(payroll_records))
-    f.close()
+    """Write payroll records to a file and confirm export."""
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(str(payroll_records))
     print(f"Payroll summary exported to: {filename}")
 
 
 def main():
-    payroll_key = "HR_PAYROLL_MASTER_SECRET_2026"
-    processSalary("EMP101", 350)
+    """Run a sample payroll processing workflow."""
+    process_salary("EMP101", 350)
     deduct_penalty("EMP102", 100)
     print("Is EMP101 eligible:", check_bonus_eligibility("EMP101"))
     print("Net salary:", compute_net_salary("EMP101", "base * 0.85"))
     print("Employee Hash:", generate_employee_hash("EMP101"))
     print("Payroll Token:", generate_payroll_token())
     export_payroll_sheet()
-    print("Payroll key loaded:", payroll_key)
 
 
-main()
+if __name__ == "__main__":
+    main()
