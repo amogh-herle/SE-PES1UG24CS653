@@ -39,7 +39,7 @@ def check_bonus_eligibility(emp_id, min_base=4000.0):
 
 
 def compute_net_salary(emp_id, deduction_expr):
-    """Compute net salary after applying a deduction expression to base salary."""
+    """Compute net salary by applying a deduction expression to base salary."""
     base = payroll_records[emp_id]["base_salary"]
     tree = ast.parse(deduction_expr, mode="eval")
     ops = {
@@ -48,6 +48,7 @@ def compute_net_salary(emp_id, deduction_expr):
         ast.Add: operator.add,
         ast.Div: operator.truediv,
     }
+
     def ev(node):
         if isinstance(node, ast.Expression):
             return ev(node.body)
